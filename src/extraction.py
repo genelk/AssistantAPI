@@ -7,6 +7,12 @@ from typing import Dict, List, Any, Optional, Union
 
 from .models.claude_interface import ClaudeInterface
 from .text_processor import TextProcessor
+import re
+import json
+from typing import Dict, List, Any, Optional, Union
+
+from .models.claude_interface import ClaudeInterface
+from .text_processor import TextProcessor
 
 class Extractor:
     """Extract structured information from document content."""
@@ -32,6 +38,113 @@ class Extractor:
         """
         text = document.get("full_text", "")
         if len(text) > 15000:
+            text = text[:15000]
+        
+        # Build the extraction prompt based on information type
+        prompt_instructions = ""
+        if information_type == "contract_terms":
+            prompt_instructions = """
+            Extract the key contract terms and clauses, including:
+            1. Parties involved
+            2. Effective dates and duration
+            3. Payment terms and amounts
+            4. Deliverables and obligations
+            5. Termination conditions
+            6. Liabilities and warranties
+            7. Any special clauses or conditions
+            """
+        elif information_type == "research_findings":
+            prompt_instructions = """
+            Extract the key research findings, including:
+            1. Study objectives/research questions
+            2. Methodology used
+            3. Main results and findings
+            4. Statistical significance (p-values, confidence intervals, etc.)
+            5. Limitations mentioned
+            6. Conclusions and implications
+            """
+        elif information_type == "product_specs":
+            prompt_instructions = """
+            Extract product specifications, including:
+            1. Product name and model
+            2. Technical specifications and parameters
+            3. Features and capabilities
+            4. Dimensions and physical characteristics
+            5. Compatibility and requirements
+            6. Pricing information (if available)
+            """
+        else:
+            # Use custom instructions or a general fallback
+            prompt_instructions = custom_instructions or """
+            Extract all relevant information about the document's main topics.
+            Include key facts, figures, dates, and any critical information.
+            """
+        
+        # Prepare final prompt
+        prompt = f"""
+        Extract the following information from this document:
+        
+        {prompt_instructions}
+        
+        DOCUMENT:
+        ```
+        {text}
+        ```
+        
+        Format the output as structured JSON with appropriate fields for each type of information.
+        """
+        
+        # Get response
+        response = self.claude.generate_response(
+            prompt=prompt,
+            system_prompt="You are a precise document extraction assistant. Extract specific information from text and return it in a structured JSON format.",
+            max_tokens=2000
+        )
+        
+        # Try to parse JSON from response
+        extracted_info = self._extract_json_from_text(response["content"])
+        
+        # Add metadata
+        return {
+            "information_type": information_type,
+            "extracted_information": extracted_info,
+            "document_id": document.get("file_path", ""),
+            "usage": response.get("usage", {})
+        }
+    
+    def _extract_json_from_text(self, text: str) -> Dict[str, Any]:
+        """Extract and parse JSON from text response.
+        
+        Args:
+            text: Text containing JSON
+            
+        Returns:
+            Parsed JSON dict (empty dict if parsing fails)
+        """
+        try:
+            # Try to find JSON block with regex
+            json_match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', text)
+            if json_match:
+                json_str = json_match.group(1)
+                return json.loads(json_str)
+            
+            # If no match with code blocks, try to parse the whole text
+            return json.loads(text)
+        except (json.JSONDecodeError, AttributeError):
+            # If JSON parsing fails, try to find anything that looks like JSON
+            try:
+                # Find the first { and last }
+                start = text.find('{')
+                end = text.rfind('}')
+                
+                if start != -1 and end != -1 and end > start:
+                    json_str = text[start:end+1]
+                    return json.loads(json_str)
+            except (json.JSONDecodeError, ValueError):
+                pass
+            
+            # Return empty dict if all parsing attempts fail
+            return {} > 15000:
             text = text[:15000]
         
         # Prepare prompt for entity extraction
