@@ -25,7 +25,7 @@ SmartDocs combines the power of Claude's advanced language understanding with sp
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/smartdocs.git
+git clone https://github.com/genelk/smartdocs.git
 cd smartdocs
 
 # Create a virtual environment
