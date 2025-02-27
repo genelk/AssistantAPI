@@ -25,7 +25,7 @@ SmartDocs combines the power of Claude's advanced language understanding with sp
 
 ```bash
 # Clone the repository
-git clone https://github.com/genelk/smartdocs.git
+git clone https://github.com/yourusername/smartdocs.git
 cd smartdocs
 
 # Create a virtual environment
@@ -34,10 +34,35 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
-
-# Set up environment variables
-export ANTHROPIC_API_KEY="your_claude_api_key"  # On Windows: set ANTHROPIC_API_KEY=your_claude_api_key
 ```
+
+## API Key Setup
+
+### Claude API Key (Required for core functionality)
+
+This project uses Anthropic's Claude API for document analysis, summarization, and question answering. You will need your own Claude API key to run this project.
+
+**How to get a Claude API key:**
+
+1. Visit [Anthropic's API Console](https://console.anthropic.com)
+2. Create an account or log in
+3. Navigate to the "API Keys" section
+4. Create a new API key
+5. Add payment information (plans start at approximately $5/month)
+
+**Setting up your API key:**
+
+```bash
+# Set as environment variable
+export ANTHROPIC_API_KEY="your_claude_api_key"  # On Linux/macOS
+set ANTHROPIC_API_KEY=your_claude_api_key       # On Windows CMD
+$env:ANTHROPIC_API_KEY="your_claude_api_key"    # On Windows PowerShell
+
+# OR pass directly to scripts with --api-key parameter
+python examples/example_scripts/summary_generation.py sample.pdf --api-key your_claude_api_key
+```
+
+⚠️ **Important:** The Claude API is a paid service. Usage costs will depend on the volume of text processed and the specific model used. Be mindful of your usage to avoid unexpected charges.
 
 ## Usage
 
